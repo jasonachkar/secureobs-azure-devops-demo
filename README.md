@@ -1,57 +1,49 @@
-# SecureObs Azure DevOps Demo
+# SecureObs End-to-End Demo
 
-This repository demonstrates how **SecureObs** turns Azure DevOps security-scanner output into one normalized, prioritized risk dashboard.
-
-It uses [WebGoat](https://github.com/WebGoat/WebGoat), a deliberately vulnerable application, as the demo target.
-
-## Demo flow
+This repository records a complete SecureObs onboarding demo using GitHub Actions:
 
 ```text
-Connect Azure DevOps
-  → SecureObs creates or reuses the demo project
-  → Pipeline runs Trivy, Gitleaks, and Semgrep
-  → Findings are normalized and ingested
-  → SecureObs dashboard shows prioritized risks
-  → Playwright records the walkthrough
+Sign in to SecureObs
+  → Fork OWASP WebGoat
+  → Create SecureObs project
+  → Connect forked repository
+  → Copy SecureObs GitHub Actions YAML
+  → Commit workflow to WebGoat fork
+  → Run workflow and wait for success
+  → Return to SecureObs
+  → Inspect normalized findings and details
 ```
 
-## Quick start
-
-### 1. Configure secrets
-
-Store these values in Azure DevOps and GitHub Actions secrets:
-
-```text
-SECUREOBS_BASE_URL=https://secureobs.com
-SECUREOBS_INGEST_URL=https://secureobs.com/api/ingest
-SECUREOBS_API_TOKEN=<store-as-secret>
-SECUREOBS_PROJECT_ID=<created automatically or supplied manually>
-```
-
-Never commit an API token to this repository.
-
-### 2. Run the Azure DevOps pipeline
-
-Import `azure-pipelines.yml`, then run the pipeline. It creates or reuses the `WebGoat Azure DevOps Demo` project, scans the repository, and uploads findings to SecureObs.
-
-### 3. Record the dashboard
-
-For Microsoft Entra ID sign-in, run locally:
+## Record locally
 
 ```bash
-SECUREOBS_MANUAL_LOGIN=true \
+npm install
+npx playwright install chromium
+
+GITHUB_USER=your-github-username \
 SECUREOBS_DEMO_URL=https://secureobs.com \
-npx playwright test --headed
+npx playwright test playwright/end-to-end-demo.spec.ts --headed
 ```
 
-Complete the Entra login manually. Playwright then records the SecureObs dashboard walkthrough.
+The recording begins only after you complete Microsoft Entra sign-in.
 
-## Security notes
+The final video is saved in:
 
-- WebGoat is intentionally vulnerable; run it only in an isolated environment.
-- Use a dedicated demo Entra tenant and demo user for automation.
-- Revoke and rotate any API token that has been exposed outside a secrets manager.
+```text
+playwright/videos/
+```
 
-## License
+## Required environment variables
 
-MIT for the demo automation and documentation. WebGoat remains subject to its upstream license.
+| Variable | Purpose |
+|---|---|
+| `GITHUB_USER` | Your GitHub username, used for the WebGoat fork |
+| `SECUREOBS_DEMO_URL` | SecureObs URL; defaults to `https://secureobs.com` |
+| `SECUREOBS_PROJECT_NAME` | Optional demo project name |
+
+## Important
+
+- Do not record with your personal Entra account for public marketing material.
+- Use a dedicated demo Entra tenant and demo user when possible.
+- Replace the selector constants in `playwright/end-to-end-demo.spec.ts` with stable `data-testid` attributes from SecureObs.
+- No API tokens or passwords are committed to this repository.

@@ -1,27 +1,39 @@
-# 90-second demo script
+# End-to-end demo script
 
 ## Opening
 
-> Security teams do not usually lack scanners. They lack one clear place to understand what every scanner found.
+> Connecting SecureObs takes minutes: fork a vulnerable app, connect the repository, add one workflow, and see prioritized security findings.
 
-## Pipeline
+## Fork WebGoat
 
-> Here is WebGoat, a deliberately vulnerable application, connected to an Azure DevOps pipeline.
+> We start with WebGoat, a deliberately vulnerable application, and fork it into our own GitHub account.
 
-## Ingestion
+## Create SecureObs project
 
-> The pipeline runs dependency scanning, secret detection, and static analysis. SecureObs receives the normalized findings through a secure API token.
+> In SecureObs, we create a project for this repository.
 
-## Dashboard
+## Connect repository
 
-> Instead of reviewing raw scanner logs, the team sees critical and high-risk findings in one dashboard, with the source scanner, affected location, and remediation guidance.
+> We connect the forked WebGoat repository. SecureObs generates the GitHub Actions workflow needed to scan it.
 
-## Action
+## Add workflow
 
-> Security findings become engineering work: filter by severity, inspect the details, and export a report or create a work item.
+> We paste the generated YAML into the repository’s GitHub Actions workflow and commit it.
+
+## Run pipeline
+
+> The workflow runs dependency scanning, secret detection, and static analysis, then sends normalized findings to SecureObs.
+
+## Results
+
+> Once the workflow succeeds, SecureObs shows the results in one dashboard: severity, scanner source, affected location, remediation guidance, and trends.
+
+## Finding details
+
+> We open individual findings to see exactly what was detected, where it exists, and what the team should do next.
 
 ## Close
 
-> SecureObs turns fragmented pipeline security output into one prioritized, actionable risk view.
+> SecureObs turns fragmented security scanner output into actionable engineering work.
 >
-> Connect your Azure DevOps pipeline in minutes. Try SecureObs.
+> Connect your repository in minutes. Try SecureObs.

@@ -1,5 +1,6 @@
 node_modules/
 playwright/videos/
+playwright/videos/discarded/
 playwright/.cache/
 test-results/
 playwright-report/
