@@ -8,7 +8,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.SECUREOBS_DEMO_URL ?? "https://secureobs.com",
     trace: "retain-on-failure",
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 2,
     ...devices["Desktop Chrome"],
   },
   outputDir: "playwright/videos",

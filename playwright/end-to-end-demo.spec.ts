@@ -27,21 +27,21 @@ const selectors = {
 test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, testInfo) => {
   const profileDir = path.join(process.cwd(), ".playwright-chrome-profile");
 
-  // Uses the real installed Chrome and preserves cookies/logins between runs.
   const context: BrowserContext = await chromium.launchPersistentContext(profileDir, {
     channel: "chrome",
     headless: false,
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 2,
+    args: ["--start-maximized"],
     recordVideo: {
       dir: testInfo.outputDir,
-      size: { width: 1920, height: 1080 },
+      size: { width: 1440, height: 900 },
     },
   });
 
   const page = context.pages()[0] ?? (await context.newPage());
 
   try {
-    // Fork WebGoat, or open the existing fork.
     await page.goto(`${githubUrl}/${webgoatRepo}`);
 
     const forkButton = page.getByRole("button", { name: /fork/i }).first();
@@ -56,18 +56,15 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
     await page.goto(`${githubUrl}/${githubUser}/WebGoat`);
     await expect(page).toHaveURL(new RegExp(`${githubUser}/WebGoat`), { timeout: 60000 });
 
-    // Create or open the SecureObs project.
     await page.goto(secureObsUrl);
     await page.getByRole("button", { name: selectors.createProjectButton }).first().click();
     await page.getByLabel(selectors.projectNameInput).fill(demoProjectName);
     await page.getByRole("button", { name: /create/i }).click();
 
-    // Connect the forked repository.
     await page.getByRole("button", { name: selectors.connectRepository }).first().click();
     await page.getByLabel(selectors.repositoryInput).fill(`${githubUrl}/${githubUser}/WebGoat`);
     await page.getByRole("button", { name: /connect|save/i }).click();
 
-    // Copy SecureObs-generated GitHub Actions YAML.
     await page.getByRole("button", { name: selectors.generateWorkflow }).first().click();
     const workflowYaml = await page
       .getByRole("button", { name: selectors.copyYaml })
@@ -80,14 +77,12 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
       );
     }
 
-    // Add workflow to the fork.
     await page.goto(
       `${githubUrl}/${githubUser}/WebGoat/new/main?filename=.github/workflows/secureobs.yml`
     );
     await page.getByLabel(/file contents|editor/i).fill(workflowYaml);
     await page.getByRole("button", { name: /commit changes/i }).click();
 
-    // Run workflow and wait for success.
     await page.goto(`${githubUrl}/${githubUser}/WebGoat/actions`);
     await page.getByText(/secureobs/i).first().click();
     await page.getByRole("button", { name: /run workflow/i }).first().click();
@@ -101,7 +96,6 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
         .first()
     ).toBeVisible({ timeout: 900000 });
 
-    // Show SecureObs results.
     await page.goto(secureObsUrl);
     await page.getByText(demoProjectName).first().click();
     await page.getByRole("tab", { name: selectors.findingsTab }).click();
