@@ -12,13 +12,4 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
   },
   outputDir: "playwright/videos",
-  projects: [
-    {
-      name: "chrome",
-      use: {
-        ...devices["Desktop Chrome"],
-        headless: false,
-      },
-    },
-  ],
 });

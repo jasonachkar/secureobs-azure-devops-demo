@@ -1,20 +1,20 @@
 # SecureObs End-to-End Demo
 
-This repository records a complete SecureObs onboarding demo using GitHub Actions:
+Records a complete SecureObs onboarding demo using your installed Chrome and GitHub Actions.
 
 ```text
-Sign in to SecureObs
-  → Fork OWASP WebGoat
+Open SecureObs using an already-authenticated Chrome profile
+  → Fork or open WebGoat
   → Create SecureObs project
   → Connect forked repository
   → Copy SecureObs GitHub Actions YAML
-  → Commit workflow to WebGoat fork
+  → Commit workflow
   → Run workflow and wait for success
   → Return to SecureObs
-  → Inspect normalized findings and details
+  → Inspect findings and details
 ```
 
-## Record locally
+## Run
 
 ```bash
 npm install
@@ -22,28 +22,24 @@ npx playwright install chromium
 
 GITHUB_USER=your-github-username \
 SECUREOBS_DEMO_URL=https://secureobs.com \
-npx playwright test playwright/end-to-end-demo.spec.ts --headed
+npx playwright test playwright/end-to-end-demo.spec.ts
 ```
 
-The recording begins only after you complete Microsoft Entra sign-in.
+The first run opens a dedicated Chrome profile. Sign in once to GitHub and SecureObs; future runs reuse those sessions.
 
-The final video is saved in:
+## Dedicated profile
+
+The recorder uses:
 
 ```text
-playwright/videos/
+.playwright-chrome-profile
 ```
 
-## Required environment variables
+Do not point it at your daily Chrome profile. A dedicated profile keeps marketing-demo cookies separate from your personal browsing and reduces the risk of accidental exposure.
 
-| Variable | Purpose |
-|---|---|
-| `GITHUB_USER` | Your GitHub username, used for the WebGoat fork |
-| `SECUREOBS_DEMO_URL` | SecureObs URL; defaults to `https://secureobs.com` |
-| `SECUREOBS_PROJECT_NAME` | Optional demo project name |
+## Requirements
 
-## Important
-
-- Do not record with your personal Entra account for public marketing material.
-- Use a dedicated demo Entra tenant and demo user when possible.
-- Replace the selector constants in `playwright/end-to-end-demo.spec.ts` with stable `data-testid` attributes from SecureObs.
-- No API tokens or passwords are committed to this repository.
+- `GITHUB_USER` must be set.
+- SecureObs should expose its generated workflow YAML through `data-clipboard-text` or another automation-friendly attribute.
+- Replace selector constants in `playwright/end-to-end-demo.spec.ts` with stable `data-testid` attributes.
+- No API tokens or passwords are committed.

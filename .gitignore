@@ -1,6 +1,6 @@
 node_modules/
+.playwright-chrome-profile/
 playwright/videos/
-playwright/videos/discarded/
 playwright/.cache/
 test-results/
 playwright-report/
