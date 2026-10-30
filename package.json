@@ -1,0 +1,14 @@
+{
+  "name": "secureobs-azure-devops-demo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "record": "SECUREOBS_MANUAL_LOGIN=true playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.6.0"
+  }
+}

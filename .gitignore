@@ -1,0 +1,8 @@
+node_modules/
+playwright/videos/
+playwright/.cache/
+test-results/
+playwright-report/
+.env
+.env.local
+*.log
