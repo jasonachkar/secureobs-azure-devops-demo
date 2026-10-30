@@ -8,6 +8,8 @@ const githubUser = process.env.GITHUB_USER;
 const demoProjectName = process.env.SECUREOBS_PROJECT_NAME ?? "WebGoat GitHub Actions Demo";
 const entraEmail = process.env.SECUREOBS_DEMO_EMAIL;
 const entraPassword = process.env.SECUREOBS_DEMO_PASSWORD;
+const githubEmail = process.env.GITHUB_DEMO_EMAIL;
+const githubPassword = process.env.GITHUB_DEMO_PASSWORD;
 
 if (!githubUser) {
   throw new Error("Set GITHUB_USER to your GitHub username.");
@@ -16,6 +18,12 @@ if (!githubUser) {
 if (!entraEmail || !entraPassword) {
   throw new Error(
     "Set SECUREOBS_DEMO_EMAIL and SECUREOBS_DEMO_PASSWORD for automated Entra sign-in."
+  );
+}
+
+if (!githubEmail || !githubPassword) {
+  throw new Error(
+    "Set GITHUB_DEMO_EMAIL and GITHUB_DEMO_PASSWORD for automated GitHub sign-in."
   );
 }
 
@@ -32,10 +40,41 @@ const selectors = {
   findingDetails: /[details|view|open]/i,
 };
 
+async function isGitHubAuthenticated(page: Page) {
+  await page.goto(`${githubUrl}/${githubUser}`);
+  return !page.url().includes("/login");
+}
+
+async function signInToGitHub(page: Page) {
+  if (await isGitHubAuthenticated(page)) {
+    return;
+  }
+
+  await page.goto(`${githubUrl}/login`);
+
+  const emailInput = page.locator('#login_field').first();
+  await emailInput.waitFor({ state: "visible", timeout: 30000 });
+  await emailInput.fill(githubEmail!);
+
+  const passwordInput = page.locator('#password').first();
+  await passwordInput.waitFor({ state: "visible", timeout: 30000 });
+  await passwordInput.fill(githubPassword!);
+
+  await page.getByRole("button", { name: /^sign in$/i }).click();
+
+  console.log("\nApprove GitHub 2FA/passkey in the opened Chrome window if prompted...");
+
+  await page.waitForURL(
+    (url) => !url.href.includes("/login") && !url.href.includes("/sessions/verified-device"),
+    { timeout: 300000 }
+  );
+
+  await expect(page).toHaveURL(new RegExp(`${githubUser}`), { timeout: 60000 });
+}
+
 async function signInWithEntra(page: Page) {
   await page.goto(secureObsUrl);
 
-  // Wait for either SecureObs or the Entra login redirect.
   await page.waitForURL(
     (url) =>
       url.href.includes("login.microsoftonline.com") ||
@@ -47,19 +86,16 @@ async function signInWithEntra(page: Page) {
     return;
   }
 
-  // Entra email
   const emailInput = page.locator('input[type="email"], input[name="loginfmt"]').first();
   await emailInput.waitFor({ state: "visible", timeout: 30000 });
   await emailInput.fill(entraEmail!);
   await page.getByRole("button", { name: /^next$/i }).click();
 
-  // Entra password
   const passwordInput = page.locator('input[type="password"], input[name="passwd"]').first();
   await passwordInput.waitFor({ state: "visible", timeout: 30000 });
   await passwordInput.fill(entraPassword!);
   await page.getByRole("button", { name: /^sign in$/i }).click();
 
-  // Pause for MFA / 2FA approval.
   console.log("\nApprove MFA/2FA in the opened Chrome window if prompted...");
 
   await page.waitForURL(
@@ -67,7 +103,6 @@ async function signInWithEntra(page: Page) {
     { timeout: 300000 }
   );
 
-  // Wait for SecureObs authenticated app.
   await page.waitForURL(selectors.secureObsApp, { timeout: 60000 });
 }
 
@@ -89,6 +124,9 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
   const page = context.pages()[0] ?? (await context.newPage());
 
   try {
+    // Sign into GitHub before forking WebGoat.
+    await signInToGitHub(page);
+
     // Fork WebGoat, or open the existing fork.
     await page.goto(`${githubUrl}/${webgoatRepo}`);
 
