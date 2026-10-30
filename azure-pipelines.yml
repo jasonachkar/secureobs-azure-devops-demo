@@ -1,0 +1,57 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: secureobs-demo
+
+stages:
+  - stage: Scan
+    displayName: Scan WebGoat and ingest findings
+    jobs:
+      - job: SecurityScan
+        displayName: Run security scanners
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.11'
+
+          - script: |
+              python -m pip install --upgrade pip
+              pip install requests
+            displayName: Install Python dependencies
+
+          - script: |
+              mkdir -p scan-results
+
+              # Dependency vulnerabilities
+              docker run --rm -v "$(pwd)/scan-results:/output" aquasec/trivy:latest fs --format json --output /output/trivy.json .
+
+              # Secrets detection
+              docker run --rm -v "$(pwd)/scan-results:/output" zricethezav/gitleaks:latest detect --source /output --report-format json --report-path /output/gitleaks.json || true
+
+              # Static analysis
+              docker run --rm -v "$(pwd)/scan-results:/output" returntocorp/semgrep:latest semgrep --config auto --json --output /output/semgrep.json . || true
+            displayName: Run Trivy, Gitleaks, and Semgrep
+
+          - script: |
+              python scripts/ingest-findings.py \
+                --input-dir scan-results \
+                --secureobs-url "$SECUREOBS_INGEST_URL" \
+                --project-id "$SECUREOBS_PROJECT_ID" \
+                --api-token "$SECUREOBS_API_TOKEN"
+            displayName: Ingest findings into SecureObs
+            env:
+              SECUREOBS_INGEST_URL: $(SECUREOBS_INGEST_URL)
+              SECUREOBS_PROJECT_ID: $(SECUREOBS_PROJECT_ID)
+              SECUREOBS_API_TOKEN: $(SECUREOBS_API_TOKEN)
+
+          - publish: scan-results
+            artifact: security-scan-results

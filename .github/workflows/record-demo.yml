@@ -1,0 +1,34 @@
+name: Record SecureObs demo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright demo recording
+        env:
+          SECUREOBS_DEMO_URL: ${{ secrets.SECUREOBS_DEMO_URL }}
+          SECUREOBS_DEMO_EMAIL: ${{ secrets.SECUREOBS_DEMO_EMAIL }}
+          SECUREOBS_DEMO_PASSWORD: ${{ secrets.SECUREOBS_DEMO_PASSWORD }}
+        run: npx playwright test
+
+      - name: Upload demo recording
+        uses: actions/upload-artifact@v4
+        with:
+          name: secureobs-demo-video
+          path: playwright/videos/
+          if-no-files-found: error
