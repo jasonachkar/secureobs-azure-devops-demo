@@ -8,7 +8,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.SECUREOBS_DEMO_URL ?? "https://secureobs.com",
     trace: "retain-on-failure",
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1280, height: 800 },
     deviceScaleFactor: 2,
     ...devices["Desktop Chrome"],
   },
