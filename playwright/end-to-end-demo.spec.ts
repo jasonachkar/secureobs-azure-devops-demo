@@ -28,16 +28,18 @@ if (!githubEmail || !githubPassword) {
 }
 
 const selectors = {
-  secureObsApp: /[dashboard|projects|overview]/i,
-  createProjectButton: /[create project|new project|add project]/i,
+  // Parentheses are required: [dashboard|projects|overview] is a character class
+  // and incorrectly matches almost any URL, including Microsoft login URLs.
+  secureObsApp: /(dashboard|projects|overview)/i,
+  createProjectButton: /(create project|new project|add project)/i,
   projectNameInput: 'input[placeholder*="project" i], input[name*="project" i], input[data-testid*="project-name" i]',
-  connectRepository: /[connect repository|add repository|connect repo]/i,
+  connectRepository: /(connect repository|add repository|connect repo)/i,
   repositoryInput: 'input[placeholder*="repository" i], input[name*="repository" i], input[data-testid*="repository" i]',
-  generateWorkflow: /[generate workflow|pipeline yaml|github actions]/i,
-  copyYaml: /[copy yaml|copy workflow|copy]/i,
-  findingsTab: /[findings|risks|security]/i,
-  findingRow: /[trivy|gitleaks|semgrep|critical|high]/i,
-  findingDetails: /[details|view|open]/i,
+  generateWorkflow: /(generate workflow|pipeline yaml|github actions)/i,
+  copyYaml: /(copy yaml|copy workflow|copy)/i,
+  findingsTab: /(findings|risks|security)/i,
+  findingRow: /(trivy|gitleaks|semgrep|critical|high)/i,
+  findingDetails: /(details|view|open)/i,
 };
 
 async function isGitHubAuthenticated(page: Page) {
@@ -77,10 +79,10 @@ async function signInWithEntra(page: Page) {
 
   // Wait for either the Entra email field or an authenticated SecureObs route.
   const entraEmailField = page.locator('input[name="loginfmt"], input[type="email"]').first();
-  const secureObsLoaded = page.waitForURL(selectors.secureObsApp, { timeout: 60000 });
+  const secureObsLoaded = page.waitForURL(selectors.secureObsApp, { timeout: 120000 });
 
   await Promise.race([
-    entraEmailField.waitFor({ state: "visible", timeout: 60000 }),
+    entraEmailField.waitFor({ state: "visible", timeout: 120000 }),
     secureObsLoaded,
   ]);
 
@@ -101,7 +103,7 @@ async function signInWithEntra(page: Page) {
 
   // Enter Entra password.
   const passwordField = page.locator('input[name="passwd"], input[type="password"]').first();
-  await passwordField.waitFor({ state: "visible", timeout: 30000 });
+  await passwordField.waitFor({ state: "visible", timeout: 60000 });
   await passwordField.fill(entraPassword!);
 
   const signInButton = page.getByRole("button", { name: /^sign in$/i }).first();
@@ -125,7 +127,7 @@ async function signInWithEntra(page: Page) {
     { timeout: 300000 }
   );
 
-  await page.waitForURL(selectors.secureObsApp, { timeout: 60000 });
+  await page.waitForURL(selectors.secureObsApp, { timeout: 120000 });
 }
 
 test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, testInfo) => {
@@ -171,7 +173,7 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
     await page.getByRole("button", { name: selectors.createProjectButton }).first().click();
 
     const projectName = page.locator(selectors.projectNameInput).first();
-    await projectName.waitFor({ state: "visible", timeout: 30000 });
+    await projectName.waitFor({ state: "visible", timeout: 60000 });
     await projectName.fill(demoProjectName);
 
     await page.getByRole("button", { name: /^create$/i }).click();
@@ -180,7 +182,7 @@ test("Record full SecureObs onboarding and GitHub Actions demo", async ({}, test
     await page.getByRole("button", { name: selectors.connectRepository }).first().click();
 
     const repositoryInput = page.locator(selectors.repositoryInput).first();
-    await repositoryInput.waitFor({ state: "visible", timeout: 30000 });
+    await repositoryInput.waitFor({ state: "visible", timeout: 60000 });
     await repositoryInput.fill(`${githubUrl}/${githubUser}/WebGoat`);
 
     await page.getByRole("button", { name: /^connect$|^save$/i }).click();
