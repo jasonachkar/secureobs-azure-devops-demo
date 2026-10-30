@@ -75,29 +75,51 @@ async function signInToGitHub(page: Page) {
 async function signInWithEntra(page: Page) {
   await page.goto(secureObsUrl);
 
-  await page.waitForURL(
-    (url) =>
-      url.href.includes("login.microsoftonline.com") ||
-      selectors.secureObsApp.test(url.href),
-    { timeout: 60000 }
-  );
+  // Wait for either the Entra email field or an authenticated SecureObs route.
+  const entraEmailField = page.locator('input[name="loginfmt"], input[type="email"]').first();
+  const secureObsLoaded = page.waitForURL(selectors.secureObsApp, { timeout: 60000 });
 
-  if (!page.url().includes("login.microsoftonline.com")) {
+  await Promise.race([
+    entraEmailField.waitFor({ state: "visible", timeout: 60000 }),
+    secureObsLoaded,
+  ]);
+
+  // Already authenticated.
+  if (!(await entraEmailField.isVisible().catch(() => false))) {
     return;
   }
 
-  const emailInput = page.locator('input[type="email"], input[name="loginfmt"]').first();
-  await emailInput.waitFor({ state: "visible", timeout: 30000 });
-  await emailInput.fill(entraEmail!);
-  await page.getByRole("button", { name: /^next$/i }).click();
+  // Enter Entra email.
+  await entraEmailField.fill(entraEmail!);
 
-  const passwordInput = page.locator('input[type="password"], input[name="passwd"]').first();
-  await passwordInput.waitFor({ state: "visible", timeout: 30000 });
-  await passwordInput.fill(entraPassword!);
-  await page.getByRole("button", { name: /^sign in$/i }).click();
+  const nextButton = page.getByRole("button", { name: /^next$/i }).first();
+  if (await nextButton.isVisible().catch(() => false)) {
+    await nextButton.click();
+  } else {
+    await entraEmailField.press("Enter");
+  }
+
+  // Enter Entra password.
+  const passwordField = page.locator('input[name="passwd"], input[type="password"]').first();
+  await passwordField.waitFor({ state: "visible", timeout: 30000 });
+  await passwordField.fill(entraPassword!);
+
+  const signInButton = page.getByRole("button", { name: /^sign in$/i }).first();
+  if (await signInButton.isVisible().catch(() => false)) {
+    await signInButton.click();
+  } else {
+    await passwordField.press("Enter");
+  }
+
+  // Handle "Stay signed in?" if Microsoft displays it.
+  const staySignedIn = page.getByRole("button", { name: /^yes$/i }).first();
+  if (await staySignedIn.isVisible().catch(() => false)) {
+    await staySignedIn.click();
+  }
 
   console.log("\nApprove MFA/2FA in the opened Chrome window if prompted...");
 
+  // Wait for MFA approval and return to SecureObs.
   await page.waitForURL(
     (url) => !url.href.includes("login.microsoftonline.com"),
     { timeout: 300000 }
